@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>quick trace web interface</title>
+
+    <link href="../bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+<div class="container-fluid">
+    <div class="row">
+    <div class="col-md-12">
+       <div>
+           <h2 class="sub-header">Input</h2>
+       </div>
+       <div>
+           <div class="form-group">
+               <label for="target_text">browse or paste</label>
+               <textarea class="form-control" id="target_text" rows="10"></textarea>
+           </div>
+       </div>
+       <div id="proximity_form" class="form-inline form-group">
+       <div class="col-12">
+           <div class="input-group">
+               <label class="input-group-btn">
+                   <span class="btn btn-default">
+                       Browse… <input type="file" style="display: none;" multiple="">
+                   </span>
+               </label>
+               <input type="text" class="form-control" readonly="">
+           </div>
+       <button type="submit" class="form-control pull-right" id="go_btn">go</button>
+       </div>
+       </div>
+    </div>
+    </div>
+</div>
+</body>
+</html>

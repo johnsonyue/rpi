@@ -1,0 +1,7 @@
+{
+	"app":{
+		"host_name":"172.31.31.155",
+		"port_number":1234,
+		"root_dir":"/home/thesis_env/rpi/d3v2/"
+	}
+}

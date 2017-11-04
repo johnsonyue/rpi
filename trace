@@ -1,0 +1,14 @@
+#!/bin/bash
+usage(){
+  echo "trace <\$target_file>"
+}
+test $# -lt 1 && usage && exit
+
+target_file=$1
+cwd=$(pwd)
+node_name=$(awk -F " *= *" '/node_name/ {print $2}' config.ini)
+date=`date +%Y%m%d`
+out_file=$cwd/$date"."$node_name".warts"
+
+echo "scamper -c 'trace' -p 10000 -M $node_name -C $date -o $out_file -O warts -f $cwd/$target_file"
+scamper -c 'trace' -p 10000 -M $node_name -C $date -o $out_file -O warts -f $cwd/$target_file
