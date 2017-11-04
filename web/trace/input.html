@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>quick trace web interface</title>
+
+    <link href="../bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body>
+<script src="../bootstrap-3.3.7-dist/js/jquery.min.js"></script>
+<div class="container-fluid">
+    <div class="row">
+    <div class="col-md-12">
+       <div>
+           <h2 class="sub-header">Input</h2>
+       </div>
+       <div>
+           <div class="form-group">
+               <label for="target_text"><a id="opt1">browse</a> or <a id="opt2">paste</a></label>
+               <textarea class="form-control" id="target_text" rows="10"></textarea>
+           </div>
+       </div>
+       <div id="proximity_form" class="form-inline form-group">
+       <div id="target_browse" class="col-12" style="display: none;">
+           <div class="input-group">
+               <label class="input-group-btn">
+                   <span class="btn btn-default">
+                       Browse… <input id="browse" type="file" style="display: none;" multiple="">
+                   </span>
+               </label>
+               <input id="file" type="text" class="form-control" readonly="">
+           </div>
+       <button type="submit" class="form-control pull-right" id="go_btn">go</button>
+       </div>
+       </div>
+    </div>
+    </div>
+</div>
+<script>
+var paste=true;
+$(function() {
+      $('#browse').on('change', function(files) {
+          var file = this.files[0];
+          $("#file").val(file.name);
+      });
+      $('#opt1').on('click',function(){
+          if(paste){
+              $('#target_text').css("display","none");
+              $('#target_browse').css("display","block");
+              paste=false;
+          }
+      });
+      $('#opt2').on('click',function(){
+          if(!paste){
+              $('#target_text').css("display","block");
+              $('#target_browse').css("display","none");
+              paste=true;
+          }
+      });
+  });
+</script>
+</body>
+</html>
