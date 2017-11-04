@@ -2,6 +2,10 @@
 	"app":{
 		"host_name":"172.31.31.155",
 		"port_number":1234,
-		"root_dir":"/home/rpi/web"
+		"root_dir":"/home/rpi/web",
+		"wsport_number":1236
+	},
+	"data":{
+		"root_dir":"data/"
 	}
 }

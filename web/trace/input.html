@@ -6,24 +6,49 @@
     <title>quick trace web interface</title>
 
     <link href="../bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-3.3.7-dist/css/dashboard.css" rel="stylesheet">
 </head>
 
 <body>
 <script src="../bootstrap-3.3.7-dist/js/jquery.min.js"></script>
 <div class="container-fluid">
     <div class="row">
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">TRACE WEB INTERFACE</a>
+            </div>
+    
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a><span class="badge progress-bar-danger">3</span></a></li>
+                    <li><a href="#">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <div class="col-md-12">
        <div>
            <h2 class="sub-header">Input</h2>
        </div>
        <div>
+           <label for="target_text"><a id="opt1">browse</a> or <a id="opt2">paste</a></label>
+           <div id="target_text_form">
            <div class="form-group">
-               <label for="target_text"><a id="opt1">browse</a> or <a id="opt2">paste</a></label>
                <textarea class="form-control" id="target_text" rows="10"></textarea>
            </div>
+           <button type="submit" class="btn btn-default" id="go_btn1">go</button>
+           </div>
        </div>
-       <div id="proximity_form" class="form-inline form-group">
-       <div id="target_browse" class="col-12" style="display: none;">
+       <div id="target_browse_form" class="form-inline form-group" style="display: none;">
+       <div class="col-12">
            <div class="input-group">
                <label class="input-group-btn">
                    <span class="btn btn-default">
@@ -32,10 +57,15 @@
                </label>
                <input id="file" type="text" class="form-control" readonly="">
            </div>
-       <button type="submit" class="form-control pull-right" id="go_btn">go</button>
+       <button type="submit" class="btn btn-default" id="go_btn2">go</button>
        </div>
        </div>
     </div>
+    </div>
+    <div class="col-md-12" id="output">
+        <div>
+            <h2 class="sub-header">Output</h2>
+        </div>
     </div>
 </div>
 <script>
@@ -47,19 +77,38 @@ $(function() {
       });
       $('#opt1').on('click',function(){
           if(paste){
-              $('#target_text').css("display","none");
-              $('#target_browse').css("display","block");
+              $('#target_text_form').css("display","none");
+              $('#target_browse_form').css("display","block");
               paste=false;
           }
       });
       $('#opt2').on('click',function(){
           if(!paste){
-              $('#target_text').css("display","block");
-              $('#target_browse').css("display","none");
+              $('#target_text_form').css("display","block");
+              $('#target_browse_form').css("display","none");
               paste=true;
           }
       });
-  });
+      function start_ws(){
+          var host = "47.90.99.168";
+          var port = "1236";
+ 
+          ws = new WebSocket("ws://" + host + ":" + port + "/ws");
+           
+          ws.onmessage = function(evt) {
+            alert("message received: " + evt.data);
+          };
+ 
+          ws.onclose = function(evt) {
+            alert("Connection close");
+          };
+ 
+          ws.onopen = function(evt) { 
+            alert("***Connection Opened***");
+          };
+      }
+      start_ws();
+});
 </script>
 </body>
 </html>

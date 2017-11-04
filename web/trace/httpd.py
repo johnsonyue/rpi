@@ -7,7 +7,10 @@ if __name__ == '__main__':
 	config = json.loads(open("config.json").read())
 	HOST_NAME = config["app"]["host_name"]
 	PORT_NUMBER = config["app"]["port_number"]
+	WSPORT_NUMBER = config["app"]["wsport_number"]
+
 	httpd = app.ThreadedHTTPServer( (HOST_NAME, PORT_NUMBER), app.Handler, config )
+
 	print time.asctime(), "Server Starts - %s:%s" % (HOST_NAME, PORT_NUMBER)
 	try:
 		httpd.serve_forever()

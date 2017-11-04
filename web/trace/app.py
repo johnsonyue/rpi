@@ -51,9 +51,6 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			self.wfile.write("Invalid Action: %s" % action)
 			return
 		
-		#get the config file from server.
-		#note that the http request handler is not stateful.
-		#however it can access the server data members.
 		config = self.server.config
 		post = cgi.FieldStorage(
 			fp=self.rfile, 
