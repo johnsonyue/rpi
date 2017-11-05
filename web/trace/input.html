@@ -89,11 +89,11 @@ $(function() {
               paste=true;
           }
       });
+
+      var host = "47.90.99.168";
+      var wsport = "1236";
       function start_ws(){
-          var host = "47.90.99.168";
-          var port = "1236";
- 
-          ws = new WebSocket("ws://" + host + ":" + port + "/ws");
+          ws = new WebSocket("ws://" + host + ":" + wsport + "/ws");
            
           ws.onmessage = function(evt) {
             alert("message received: " + evt.data);
@@ -108,6 +108,24 @@ $(function() {
           };
       }
       start_ws();
+
+      var baseurl = "http://47.90.99.168:1235/";
+      function on_trace_dispatched(data, status, xhr){
+          console.log(data);
+      }
+      $('#go_btn1').on('click',function(){
+          var target_text = $('#target_text').val();
+          if (target_text == "") {
+            alert("empty target");
+            return;
+          }
+          $.ajax(baseurl + "paste", {
+              type: 'POST',
+              data: {target: target_text},
+              success: on_trace_dispatched,
+              error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+          });
+      });
 });
 </script>
 </body>
