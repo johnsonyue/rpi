@@ -1,11 +1,12 @@
 import datetime
 import time
 import json
+import os
+import subprocess
 import tornado.httpserver
 import tornado.websocket
 import tornado.ioloop
 import tornado.web
-import subprocess
 
 class WSApplication(tornado.web.Application):
 	def __init__(self, handlers, config):
@@ -27,12 +28,17 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 
 	def scheduled(self):
 		user = "anonymous"
-		self.write_message("Hello,world!")
 		config = self.application.config
 		data_dir = config["data"]["root_dir"]
 		output_dir = data_dir+"/"+user
+		if not os.path.exists(output_dir):
+			self.write_message(json.dumps({"result_list":{}}))
+		else:
+			h = subprocess.Popen("ls "+output_dir+" | grep mark", shell=True, stdout=subprocess.PIPE)
+			result_list = h.stdout.read().splitlines()
+			self.write_message(json.dumps({"result_list":result_list}))
 
-		tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=1), self.scheduled) 
+		tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=5), self.scheduled) 
 
 if __name__ == '__main__':
 	config = json.loads(open("config.json").read())
