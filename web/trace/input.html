@@ -62,10 +62,9 @@
        </div>
     </div>
     </div>
-    <div class="col-md-12" id="output">
-        <div>
-            <h2 class="sub-header">Output</h2>
-        </div>
+    <div id="output" style="display: none;">
+        <h2 class="sub-header">Task Detail</h2>
+        <table class="table table-bordered table-hover col-md-10" id="detail_table"></table>
     </div>
 </div>
 <script>
@@ -109,7 +108,7 @@ $(function() {
           };
  
           ws.onopen = function(evt) { 
-            console.log("***Connection Opened***");
+            console.log("Connection Opened");
           };
       }
       start_ws();
@@ -117,6 +116,18 @@ $(function() {
       var baseurl = "http://47.90.99.168:1235/";
       function on_trace_dispatched(data, status, xhr){
           console.log(data);
+          data_dict = JSON.parse(data);
+          $('#output').css("display","block");
+          if(data_dict.status){
+              $('#output').append("<p>failed to start the task</p>");
+          }else{
+              $('#detail_table').append("<thead><th>Attr</th><th>Value</th></thead>");
+              $('#detail_table').append("<tbody></tbody>");
+              $('#detail_table tbody').append("<tr><td>cycle id</td><td>"+data_dict.date+"</td></tr>");
+              $('#detail_table tbody').append("<tr><td>output file</td><td><a>"+data_dict.out_file+"</a></td></tr>");
+              $('#detail_table tbody').append("<tr><td>target file</td><td><a>"+data_dict.target_file+"</a></td></tr>");
+          }
+          $('#go_btn1').prop("disabled",true);
       }
       $('#go_btn1').on('click',function(){
           var target_text = $('#target_text').val();
