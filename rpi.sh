@@ -1,10 +1,7 @@
 #!/bin/bash
-env_dir=$(awk -F " *= *" '/env_dir/ {print $2}' config.ini)
 cwd=$(pwd)
 
-mkdir -p $env_dir
-cd $env_dir
-tar zxvf $cwd/env_files.tar.gz
+tar zxvf open.tar.gz
 
 apt-get install -y build-essential
 #libbgpdump
@@ -25,3 +22,7 @@ make install
 cd ../
 
 cd $cwd
+
+#tornado
+apt-get install -y python-pip
+easy_install tornado

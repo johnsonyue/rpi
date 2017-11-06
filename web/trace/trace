@@ -8,13 +8,14 @@ target_file=$1
 output_dir=$2
 cwd=$(pwd)
 node_name=$(awk -F " *= *" '/node_name/ {print $2}' config.ini)
-date=$(date +%Y%m%d%H%M%S)
+date=$(date +%Y%m%d-%H:%M:%S)
+timestamp=$(date +%s)
 out_file=$output_dir/$date"."$node_name".warts"
 log_file=$output_dir/$date"."$node_name".log"
 mark_file=$output_dir/$date"."$node_name".mark"
 
-nohup scamper -c 'trace' -p 10000 -M $node_name -C $date -o $out_file -O warts -f $target_file >$log_file 2>&1 &
-test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$node_name.*$date.*$out_file.*$target_file")" && python -c "import json; d={}; d['status']=0; d['target_file']='$target_file'; d['date']='$date'; d['out_file']='$out_file'; print json.dumps(d);" \
+nohup scamper -c 'trace' -p 10000 -M $node_name -C $timestamp -o $out_file -O warts -f $target_file >$log_file 2>&1 &
+test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$node_name.*$timestamp.*$out_file.*$target_file")" && python -c "import json; d={}; d['status']=0; d['target_file']='$target_file'; d['date']='$date'; d['out_file']='$out_file'; print json.dumps(d);" \
 || python -c "import json; d={}; d['status']=-1; d['log']=open('$log_file','rb').read(); print json.dumps(d);"
 
-bash -c "while true; do test -z \"\$(ps -ef | grep -v grep | grep -e \"scamper.*$node_name.*$date.*$out_file.*$target_file\")\" && touch $mark_file && exit; sleep 10; done" >/dev/null 2>&1 &
+bash -c "while true; do test -z \"\$(ps -ef | grep -v grep | grep -e \"scamper.*$node_name.*$timestamp.*$out_file.*$target_file\")\" && touch $mark_file && exit; sleep 10; done" >/dev/null 2>&1 &

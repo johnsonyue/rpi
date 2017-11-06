@@ -89,7 +89,7 @@ $(function() {
           }
       });
 
-      var host = "47.90.99.168";
+      var host = "192.168.1.103";
       var wsport = "1236";
       function start_ws(){
           ws = new WebSocket("ws://" + host + ":" + wsport + "/ws");
@@ -100,6 +100,9 @@ $(function() {
             if (result_json.result_list.length > 0){
                 $('#notification_badge').css("display","block");
                 $('#notification_badge').html(result_json.result_list.length);
+            }else{
+                $('#notification_badge').css("displah","none");
+                $('#notification_badge').html(0);
             }
           };
  
@@ -113,7 +116,7 @@ $(function() {
       }
       start_ws();
 
-      var baseurl = "http://47.90.99.168:1235/";
+      var baseurl = "http://192.168.1.103:1235/";
       function on_trace_dispatched(data, status, xhr){
           console.log(data);
           data_dict = JSON.parse(data);
