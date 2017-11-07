@@ -89,7 +89,7 @@ $(function() {
           }
       });
 
-      var host = "192.168.1.103";
+      var host = "47.90.99.168";
       var wsport = "1236";
       function start_ws(){
           ws = new WebSocket("ws://" + host + ":" + wsport + "/ws");
@@ -116,7 +116,7 @@ $(function() {
       }
       start_ws();
 
-      var baseurl = "http://192.168.1.103:1235/";
+      var baseurl = "http://47.90.99.168:1235/";
       function on_trace_dispatched(data, status, xhr){
           console.log(data);
           data_dict = JSON.parse(data);
@@ -126,9 +126,9 @@ $(function() {
           }else{
               $('#detail_table').append("<thead><th>Attr</th><th>Value</th></thead>");
               $('#detail_table').append("<tbody></tbody>");
-              $('#detail_table tbody').append("<tr><td>cycle id</td><td>"+data_dict.date+"</td></tr>");
-              $('#detail_table tbody').append("<tr><td>output file</td><td><a>"+data_dict.out_file+"</a></td></tr>");
-              $('#detail_table tbody').append("<tr><td>target file</td><td><a>"+data_dict.target_file+"</a></td></tr>");
+              $('#detail_table tbody').append("<tr><td class='align-middle'>cycle id</td><td>"+data_dict.date+"</td></tr>");
+              $('#detail_table tbody').append("<tr><td class='align-middle'>output file</td><td><a>"+data_dict.out_file+"</a></td></tr>");
+              $('#detail_table tbody').append("<tr><td class='align-middle'>target file</td><td><a>"+data_dict.target_file+"</a></td></tr>");
           }
           $('#go_btn1').prop("disabled",true);
       }

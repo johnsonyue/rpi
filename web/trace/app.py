@@ -46,7 +46,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			
 	def do_POST(self):
 		action = self.path.replace('/','')
-		valid_action = ["paste"]
+		valid_action = ["trace", "list", "read", "delete"]
 		if ( action not in valid_action ):
 			self.send_response(505)
 			self.end_headers()
@@ -63,7 +63,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 		config = json.loads(open("config.json").read())
 		data_dir = config["data"]["root_dir"]
-		if ( action == "paste" ):
+		if ( action == "trace" ):
 			if post.has_key("target"):
 				target = post["target"].value
 
@@ -78,7 +78,16 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				fp.write(target)
 				fp.close()
 
-				h = subprocess.Popen(["./trace", target_file_path, output_dir], stdout=subprocess.PIPE)
+				h = subprocess.Popen(["./db","trace", target_file_path, output_dir], stdout=subprocess.PIPE)
+				result = h.stdout.read()
+				self.send_response(200)
+				self.end_headers()
+				self.wfile.write(result)
+		elif ( action == "list" ):
+				user = "anonymous"
+				output_dir = data_dir+"/"+user
+
+				h = subprocess.Popen(["./db","list", output_dir], stdout=subprocess.PIPE)
 				result = h.stdout.read()
 				self.send_response(200)
 				self.end_headers()

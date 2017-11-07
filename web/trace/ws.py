@@ -7,6 +7,7 @@ import tornado.httpserver
 import tornado.websocket
 import tornado.ioloop
 import tornado.web
+from functools import partial
 
 class WSApplication(tornado.web.Application):
 	def __init__(self, handlers, config):
@@ -15,7 +16,7 @@ class WSApplication(tornado.web.Application):
 
 class WSHandler(tornado.websocket.WebSocketHandler):
 	def open(self):
-		self.scheduled()
+		self.scheduled([])
 	  
 	def on_message(self, message):
 		return
@@ -26,19 +27,20 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 	def check_origin(self, origin):
 		return True
 
-	def scheduled(self):
+	def scheduled(self, prev_list):
 		user = "anonymous"
 		config = self.application.config
 		data_dir = config["data"]["root_dir"]
 		output_dir = data_dir+"/"+user
 		if not os.path.exists(output_dir):
-			self.write_message(json.dumps({"result_list":{}}))
+			self.write_message(json.dumps({"result_list":[]}))
 		else:
-			h = subprocess.Popen("ls "+output_dir+" | grep mark", shell=True, stdout=subprocess.PIPE)
+			h = subprocess.Popen(["./db","check",output_dir], stdout=subprocess.PIPE)
 			result_list = h.stdout.read().splitlines()
-			self.write_message(json.dumps({"result_list":result_list}))
+			if ( [i for i in result_list if i not in prev_list] or [i for i in prev_list if i not in result_list] ):
+				self.write_message(json.dumps({"result_list":result_list}))
 
-		tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=5), self.scheduled) 
+		tornado.ioloop.IOLoop.instance().add_timeout(datetime.timedelta(seconds=5), partial(self.scheduled, result_list)) 
 
 if __name__ == '__main__':
 	config = json.loads(open("config.json").read())

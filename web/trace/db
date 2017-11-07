@@ -1,9 +1,11 @@
 #!/bin/bash
-usage(){
+
+#trace
+trace_usage(){
   echo "trace <\$target_file> <\$output_dir>"
 }
-test $# -lt 2 && usage && exit
 
+trace(){
 target_file=$1
 output_dir=$2
 cwd=$(pwd)
@@ -19,3 +21,53 @@ test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$node_name.*$timestamp.*$
 || python -c "import json; d={}; d['status']=-1; d['log']=open('$log_file','rb').read(); print json.dumps(d);"
 
 bash -c "while true; do test -z \"\$(ps -ef | grep -v grep | grep -e \"scamper.*$node_name.*$timestamp.*$out_file.*$target_file\")\" && touch $mark_file && exit; sleep 10; done" >/dev/null 2>&1 &
+}
+
+#check
+check_usage(){
+  echo "check <\$output_dir>"
+}
+
+check(){
+output_dir=$1
+ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python <(
+cat << "EOF"
+tl=raw_input().split();
+for i in range(0,len(tl),2):
+  print tl[i+1],tl[i] 
+EOF
+) | grep ".* 3$" | cut -d' ' -f1
+}
+
+#list
+list_usage(){
+  echo "list <\$output_dir>"
+}
+
+list(){
+output_dir=$1
+ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python -c "import json; d={}; tl=raw_input().split(); task_list=[(tl[i+1],int(tl[i])) for i in range(0,len(tl),2)]; d['status']=0; d['task_list']=task_list; print json.dumps(d);"
+}
+
+#main
+usage(){
+  echo "db <\$operation> [\$args...]"
+}
+
+test $# -lt 1 && usage && exit
+
+OP=$1
+case $OP in
+  "trace")
+    test $# -lt 3 && trace_usage && exit
+    trace $2 $3
+    ;;
+  "list")
+    test $# -lt 2 && list_usage && exit
+    list $2
+    ;;
+  "check")
+    test $# -lt 2 && check_usage && exit
+    check $2
+    ;;
+esac
