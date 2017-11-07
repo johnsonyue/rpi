@@ -249,12 +249,13 @@ $(function() {
 
           var div = row.find(".fake:last-child div");
           div.append("<table class='table table-bordered col-md-10'></table>");
-          div.find("table").append("<thead></thead>");
-	  div.find("table thead").append("<th>target_file</th>");
-	  div.find("table thead").append("<th>result_file</th>");
+          div.find("table").append("<thead><tr></tr></thead>");
+	  div.find("table thead tr").append("<th>target_file</th>");
+	  div.find("table thead tr").append("<th>result_file</th>");
           div.find("table").append("<tbody></tbody>");
-	  div.find("table tbody").append("<td><a>"+output_dir+"/"+task_list[i][0]+".target</a></td>");
-	  div.find("table tbody").append("<td><a>"+output_dir+"/"+task_list[i][0]+".warts</a></td>");
+          div.find("table tbody").append("<tr class='inner_row'></tr>");
+	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".target</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".warts</a></td>");
         }
       }
       
