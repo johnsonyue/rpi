@@ -34,6 +34,7 @@ class WSHandler(tornado.websocket.WebSocketHandler):
 		output_dir = data_dir+"/"+user
 		if not os.path.exists(output_dir):
 			self.write_message(json.dumps({"result_list":[]}))
+			result_list = []
 		else:
 			h = subprocess.Popen(["./db","check",output_dir], stdout=subprocess.PIPE)
 			result_list = h.stdout.read().splitlines()

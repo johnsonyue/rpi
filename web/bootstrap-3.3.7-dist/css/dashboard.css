@@ -24,10 +24,3 @@ body {
 .main {
   padding: 20px;
 }
-
-.table > tbody > tr > td {
-  vertical-align: middle;
-}
-.table > thead > th {
-  vertical-align: middle;
-}

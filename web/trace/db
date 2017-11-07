@@ -46,12 +46,17 @@ list_usage(){
 
 list(){
 output_dir=$1
-ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python -c "import json; d={}; tl=raw_input().split(); task_list=[(tl[i+1],int(tl[i])) for i in range(0,len(tl),2)]; d['status']=0; d['task_list']=task_list; print json.dumps(d);"
+ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python -c "import json; d={}; tl=raw_input().split(); task_list=[(tl[i+1],int(tl[i])) for i in range(0,len(tl),2)]; d['status']=0; d['task_list']=task_list; d['output_dir']='$output_dir'; print json.dumps(d);"
 }
 
 #main
 usage(){
   echo "db <\$operation> [\$args...]"
+  echo "operations:"
+  echo "  trace"
+  echo "  check"
+  echo "  list"
+  echo "  remove"
 }
 
 test $# -lt 1 && usage && exit
