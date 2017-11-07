@@ -54,7 +54,11 @@
              <th style="vertical-align: middle;">Status</th>
              <th>
                <div class="form-inline form-group">
-                 <button class="btn btn-default form-control pull-right" style="outline: none;"><span class="glyphicon glyphicon-edit"></span></button>
+                 <button id="edit_btn" class="btn btn-default form-control pull-right" style="outline: none;"><span class="glyphicon glyphicon-edit"></span></button>
+                 <button id="del_btn" class="btn btn-default form-control pull-left" style="border: 1px solid #d9534f; color: #d9534f; outline: none; visibility: hidden;"><span class="glyphicon glyphicon-trash"></span></button>
+                 <button id="read_btn" class="btn btn-default form-control pull-left" style="border: 1px solid #428bca; color: #428bca; outline: none; visibility: hidden;"><span class="glyphicon glyphicon-eye-open"></span></button>
+                 <button id="selectall_btn" class="btn btn-default form-control pull-left" style="outline: none; visibility: hidden;"><span class="glyphicon glyphicon-check"></span></button>
+                 <button id="done_btn" class="btn btn-default form-control pull-right" style="outline: none; display: none;"><span class="glyphicon glyphicon-ok"></span></button>
                </div>
              </th>
            </thead>
@@ -113,29 +117,24 @@
     </div>
 </div>
 <script>
-var paste=true;
 $(function() {
-      $('#browse').on('change', function(files) {
-          var file = this.files[0];
-          $("#file").val(file.name);
-      });
-      $('#opt1').on('click',function(){
-          if(paste){
-              $('#target_text_form').css("display","none");
-              $('#target_browse_form').css("display","block");
-              paste=false;
-          }
-      });
-      $('#opt2').on('click',function(){
-          if(!paste){
-              $('#target_text_form').css("display","block");
-              $('#target_browse_form').css("display","none");
-              paste=true;
-          }
+      //load config.
+      var host;
+      var wsport;
+      var baseurl;
+      $.ajax("config.json", {
+        type: 'GET',
+        async: false,
+        success: function(data){
+          json = $.parseJSON(data);
+          host = json.web.host;
+          wsport = json.web.wsport;
+          baseurl = json.web.baseurl;
+        },
+        error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
       });
 
-      var host = "47.90.99.168";
-      var wsport = "1236";
+      //notification.
       var notification_num = 0;
       var ignore = true;
       var sms_sound = new Howl({
@@ -176,7 +175,28 @@ $(function() {
           };
       }
 
-      var baseurl = "http://47.90.99.168:1235/";
+      //setup the modal.
+      var paste=true;
+      $('#browse').on('change', function(files) {
+          var file = this.files[0];
+          $("#file").val(file.name);
+      });
+      $('#opt1').on('click',function(){
+          if(paste){
+              $('#target_text_form').css("display","none");
+              $('#target_browse_form').css("display","block");
+              paste=false;
+          }
+      });
+      $('#opt2').on('click',function(){
+          if(!paste){
+              $('#target_text_form').css("display","block");
+              $('#target_browse_form').css("display","none");
+              paste=true;
+          }
+      });
+
+      //add trace
       function on_trace_dispatched(data, status, xhr){
           console.log(data);
           data_dict = JSON.parse(data);
@@ -218,6 +238,7 @@ $(function() {
           $('#input_modal').modal();
       });
      
+      //list tasks.
       function fill_table(data, status, xhr){
         data_dict = JSON.parse(data);
         var task_list = data_dict.task_list;
@@ -237,18 +258,18 @@ $(function() {
           row.find(".real:last-child")
              .append("<td>"+task_list[i][0]+"</td>");
           row.find(".real:last-child")
-             .append("<td>"+( task_list[i][1]==2 ? "probing" : (task_list[i][1]==3?"finished":"finished & read") )+"</td>");
+             .append("<td>"+( task_list[i][1]==2 ? "probing" : (task_list[i][1]==3?"finished":"finished*") )+"</td>");
           row.find(".real:last-child")
-             .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right' type='checkbox' style='display: none;'></input></td>");
+             .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' style='visibility: hidden;'></input></td>");
 
           var row = tbl.append("<tr class='fake' style='display: none;'></tr>");
           row.find(".fake:last-child")
-             .append("<td colspan='100%'><div id='inline_div" + i.toString() + "' class='collapse col-md-10'></div></td>");
+             .append("<td colspan='100%'><div id='inline_div" + i.toString() + "' class='collapse col-md-12'></div></td>");
           row.find(".fake:last-child").on('hide.bs.collapse', function () {$(this).css("display","none");});
           row.find(".fake:last-child").on('show.bs.collapse', function () {$(this).css("display","");});
 
           var div = row.find(".fake:last-child div");
-          div.append("<table class='table table-bordered col-md-10'></table>");
+          div.append("<table class='table table-bordered col-md-12'></table>");
           div.find("table").append("<thead><tr></tr></thead>");
 	  div.find("table thead tr").append("<th>target_file</th>");
 	  div.find("table thead tr").append("<th>result_file</th>");
@@ -259,8 +280,6 @@ $(function() {
         }
       }
       
-      function dropdown_click(){}
-
       function reload_list(){
           $.ajax(baseurl + "list", {
               type: 'POST',
@@ -270,6 +289,25 @@ $(function() {
           });
       }
 
+      //edit tasks.
+      $('#edit_btn').on('click',function(){
+          $('#task_list .check').css("visibility","visible");
+          $('#edit_btn').css("display","none");
+          $('#done_btn').css("display","block");
+          $('#selectall_btn').css("visibility","visible");
+          $('#del_btn').css("visibility","visible");
+          $('#read_btn').css("visibility","visible");
+      });
+      $('#done_btn').on('click',function(){
+          $('#task_list .check').css("visibility","hidden");
+          $('#edit_btn').css("display","block");
+          $('#done_btn').css("display","none");
+          $('#selectall_btn').css("visibility","hidden");
+          $('#del_btn').css("visibility","hidden");
+          $('#read_btn').css("visibility","hidden");
+      });
+
+      //trigger calls.
       start_ws();
       reload_list();
 });

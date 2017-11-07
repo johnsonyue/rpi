@@ -2,10 +2,15 @@
 	"app":{
 		"host_name":"172.31.31.155",
 		"port_number":1235,
-		"root_dir":"/home/rpi/web",
+		"root_dir":"/root/rpi/web",
 		"wsport_number":1236
 	},
 	"data":{
 		"root_dir":"data/"
-	}
+	},
+        "web":{
+               "baseurl":"http://47.90.99.168:1235/",
+               "host":"47.90.99.168",
+               "wsport":"1236"
+        }
 }
