@@ -46,7 +46,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			
 	def do_POST(self):
 		action = self.path.replace('/','')
-		valid_action = ["trace", "list", "read", "delete"]
+		valid_action = ["trace", "list", "read", "remove"]
 		if ( action not in valid_action ):
 			self.send_response(505)
 			self.end_headers()
@@ -88,6 +88,17 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				output_dir = data_dir+"/"+user
 
 				h = subprocess.Popen(["./db","list", output_dir], stdout=subprocess.PIPE)
+				result = h.stdout.read()
+				self.send_response(200)
+				self.end_headers()
+				self.wfile.write(result)
+		elif ( action == "remove" ):
+			if post.has_key("rm_list"):
+				rm_list = post["rm_list"].value
+				user = "anonymous"
+				output_dir = data_dir+"/"+user
+
+				h = subprocess.Popen(["./db","remove", output_dir, rm_list], stdout=subprocess.PIPE)
 				result = h.stdout.read()
 				self.send_response(200)
 				self.end_headers()

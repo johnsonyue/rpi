@@ -32,7 +32,7 @@ check(){
 output_dir=$1
 ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python <(
 cat << "EOF"
-tl=raw_input().split();
+tl=raw_input().split()
 for i in range(0,len(tl),2):
   print tl[i+1],tl[i] 
 EOF
@@ -47,6 +47,25 @@ list_usage(){
 list(){
 output_dir=$1
 ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python -c "import json; d={}; tl=raw_input().split(); task_list=[(tl[i+1],int(tl[i])) for i in range(0,len(tl),2)]; d['status']=0; d['task_list']=task_list; d['output_dir']='$output_dir'; print json.dumps(d);"
+}
+
+#remove
+remove_usage(){
+  echo "remove <\$output_dir> <\$id_list>"
+}
+
+remove(){
+output_dir=$1
+id_list=$2
+echo $id_list | python <(
+cat << "EOF"
+import json
+obj=json.loads(raw_input())
+for i in obj:
+  print i
+EOF
+) | while read id; do if ls $output_dir/$id.[a-z]* >/dev/null 2>&1; then ls $output_dir/$id.[a-z]*; fi; done | xargs -I {} rm {}
+python -c "import json; d={}; d['status']=0; print json.dumps(d);"
 }
 
 #main
@@ -74,5 +93,9 @@ case $OP in
   "check")
     test $# -lt 2 && check_usage && exit
     check $2
+    ;;
+  "remove")
+    test $# -lt 3 && remove_usage && exit
+    remove $2 $3
     ;;
 esac

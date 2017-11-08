@@ -239,9 +239,10 @@ $(function() {
       });
      
       //list tasks.
+      var task_list;
       function fill_table(data, status, xhr){
         data_dict = JSON.parse(data);
-        var task_list = data_dict.task_list;
+        task_list = data_dict.task_list;
         var output_dir = data_dict.output_dir;
         if (task_list.length){
           $('#notask').css("display","none");
@@ -260,7 +261,7 @@ $(function() {
           row.find(".real:last-child")
              .append("<td>"+( task_list[i][1]==2 ? "probing" : (task_list[i][1]==3?"finished":"finished*") )+"</td>");
           row.find(".real:last-child")
-             .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' style='visibility: hidden;'></input></td>");
+             .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' value='checkbox-" + i.toString() + "' style='visibility: hidden;'></input></td>");
 
           var row = tbl.append("<tr class='fake' style='display: none;'></tr>");
           row.find(".fake:last-child")
@@ -273,10 +274,15 @@ $(function() {
           div.find("table").append("<thead><tr></tr></thead>");
 	  div.find("table thead tr").append("<th>target_file</th>");
 	  div.find("table thead tr").append("<th>result_file</th>");
+	  div.find("table thead tr").append("<th>result_topo</th>");
           div.find("table").append("<tbody></tbody>");
           div.find("table tbody").append("<tr class='inner_row'></tr>");
 	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".target</a></td>");
 	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".warts</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a>view</a></td>");
+          if (editing) {
+            $('#task_list .check').css("visibility","visible");
+          }
         }
       }
       
@@ -290,6 +296,7 @@ $(function() {
       }
 
       //edit tasks.
+      var editing = false;
       $('#edit_btn').on('click',function(){
           $('#task_list .check').css("visibility","visible");
           $('#edit_btn').css("display","none");
@@ -297,6 +304,7 @@ $(function() {
           $('#selectall_btn').css("visibility","visible");
           $('#del_btn').css("visibility","visible");
           $('#read_btn').css("visibility","visible");
+          editing = true;
       });
       $('#done_btn').on('click',function(){
           $('#task_list .check').css("visibility","hidden");
@@ -305,11 +313,46 @@ $(function() {
           $('#selectall_btn').css("visibility","hidden");
           $('#del_btn').css("visibility","hidden");
           $('#read_btn').css("visibility","hidden");
+          editing = false;
+      });
+      var checked = false;
+      $('#selectall_btn').on('click',function(){
+          if (!checked){
+            checked = true;
+            $(this).find('span').removeClass("glyphicon-check");
+            $(this).find('span').addClass("glyphicon-unchecked");
+          }else{
+            checked = false;
+            $(this).find('span').removeClass("glyphicon-unchecked");
+            $(this).find('span').addClass("glyphicon-check");
+          }
+          $('#task_list .check').prop("checked", checked);
+      });
+      $('#del_btn').on('click',function(){
+          var rm_list = [];
+          $('#task_list .check').each(function(){
+            if ($(this).prop("checked")){
+              var i = parseInt($(this).val().split('-')[1]);
+              rm_list.push(task_list[i][0]);
+            }
+          });
+          if (!rm_list.length){
+            alert("no items chosen");
+            return;
+          }
+          $.ajax(baseurl + "remove", {
+              type: 'POST',
+              data: {rm_list: JSON.stringify(rm_list)},
+              success: function(data, status, xhr){
+                reload_list();
+              },
+              error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+          });
       });
 
       //trigger calls.
       start_ws();
-      reload_list();
+      //reload_list(); //called by start_ws
 });
 </script>
 </body>
