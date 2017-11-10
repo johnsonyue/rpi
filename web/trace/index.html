@@ -51,6 +51,8 @@
            <thead>
              <th style="vertical-align: middle;">#</th>
              <th style="vertical-align: middle;">ID</th>
+             <th style="vertical-align: middle;">Start Time</th>
+             <th style="vertical-align: middle;">End Time</th>
              <th style="vertical-align: middle;">Status</th>
              <th>
                <div class="form-inline form-group">
@@ -160,7 +162,7 @@ $(function() {
                 $('#notification_badge').css("display","block");
                 $('#notification_badge').html(result_len);
             }else{
-                $('#notification_badge').css("displah","none");
+                $('#notification_badge').css("display","none");
                 $('#notification_badge').html(0);
             }
             reload_list();
@@ -198,7 +200,6 @@ $(function() {
 
       //add trace
       function on_trace_dispatched(data, status, xhr){
-          console.log(data);
           data_dict = JSON.parse(data);
           $('#output').css("display","block");
           if(data_dict.status){
@@ -259,7 +260,11 @@ $(function() {
           row.find(".real:last-child")
              .append("<td>"+task_list[i][0]+"</td>");
           row.find(".real:last-child")
-             .append("<td>"+( task_list[i][1]==2 ? "probing" : (task_list[i][1]==3?"finished":"finished*") )+"</td>");
+             .append("<td>"+task_list[i][1].start_time+"</td>");
+          row.find(".real:last-child")
+             .append("<td>" + (task_list[i][1].end_time ? task_list[i][1].end_time : "") +"</td>");
+          row.find(".real:last-child")
+             .append("<td>"+ ( task_list[i][1].end_time ? (task_list[i][1].read_time ?"finished":"finished*")  : "probing" ) +"</td>");
           row.find(".real:last-child")
              .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' value='checkbox-" + i.toString() + "' style='visibility: hidden;'></input></td>");
 
@@ -273,12 +278,14 @@ $(function() {
           div.append("<table class='table table-bordered col-md-12'></table>");
           div.find("table").append("<thead><tr></tr></thead>");
 	  div.find("table thead tr").append("<th>target_file</th>");
+	  div.find("table thead tr").append("<th>target_number</th>");
 	  div.find("table thead tr").append("<th>result_file</th>");
 	  div.find("table thead tr").append("<th>result_topo</th>");
           div.find("table").append("<tbody></tbody>");
           div.find("table tbody").append("<tr class='inner_row'></tr>");
-	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".target</a></td>");
-	  div.find(".inner_row:last-child").append("<td><a>"+output_dir+"/"+task_list[i][0]+".warts</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a>"+task_list[i][0]+".target</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a>"+task_list[i][1].target_num+"</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a>"+task_list[i][0]+".warts</a></td>");
 	  div.find(".inner_row:last-child").append("<td><a>view</a></td>");
           if (editing) {
             $('#task_list .check').css("visibility","visible");
@@ -349,10 +356,31 @@ $(function() {
               error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
           });
       });
+      $('#read_btn').on('click',function(){
+          var read_list = [];
+          $('#task_list .check').each(function(){
+            if ($(this).prop("checked")){
+              var i = parseInt($(this).val().split('-')[1]);
+              read_list.push(task_list[i][0]);
+            }
+          });
+          if (!read_list.length){
+            alert("no items chosen");
+            return;
+          }
+          $.ajax(baseurl + "read", {
+              type: 'POST',
+              data: {read_list: JSON.stringify(read_list)},
+              success: function(data, status, xhr){
+                reload_list();
+              },
+              error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+          });
+      });
 
       //trigger calls.
       start_ws();
-      //reload_list(); //called by start_ws
+      reload_list();
 });
 </script>
 </body>

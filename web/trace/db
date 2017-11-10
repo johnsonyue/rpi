@@ -1,5 +1,31 @@
 #!/bin/bash
 
+#write log.
+write_log(){
+log_file=$1
+key=$2
+value=$3
+test ! -f $log_file && touch $log_file
+test ! -z "$(cat $log_file | grep ^$key=)" && sed -i "s/$key=.*$/$key=$value/g" $log_file || echo $key=$value >>$log_file
+}
+
+#kv to json.
+kv_to_json(){
+log_file=$1
+cat $log_file | python <(
+cat << "EOF"
+import json
+d={}
+while True:
+  try:
+    f=raw_input().strip().split('=')
+    d[f[0]]=f[1]
+  except:
+    break
+print json.dumps(d)
+EOF
+)
+}
 #trace
 trace_usage(){
   echo "trace <\$target_file> <\$output_dir>"
@@ -9,18 +35,22 @@ trace(){
 target_file=$1
 output_dir=$2
 cwd=$(pwd)
-node_name=$(awk -F " *= *" '/node_name/ {print $2}' config.ini)
+node_name=$(cat config.json | tr '\n' ' ' | python -c "import json; print (json.loads(raw_input()))['app']['node_name']")
 date=$(date +%Y%m%d-%H:%M:%S)
 timestamp=$(date +%s)
 out_file=$output_dir/$date"."$node_name".warts"
 log_file=$output_dir/$date"."$node_name".log"
-mark_file=$output_dir/$date"."$node_name".mark"
 
-nohup scamper -c 'trace' -p 10000 -M $node_name -C $timestamp -o $out_file -O warts -f $target_file >$log_file 2>&1 &
-test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$node_name.*$timestamp.*$out_file.*$target_file")" && python -c "import json; d={}; d['status']=0; d['target_file']='$target_file'; d['date']='$date'; d['out_file']='$out_file'; print json.dumps(d);" \
-|| python -c "import json; d={}; d['status']=-1; d['log']=open('$log_file','rb').read(); print json.dumps(d);"
+write_log $log_file start_time $date
+write_log $log_file target_num $(cat $target_file <(echo) | grep -v "^$" | wc -l)
+write_log $log_file target_file $target_file
+write_log $log_file result_file $out_file
+nohup scamper -c 'trace' -p 10000 -M $node_name -C $timestamp -o $out_file -O warts -f $target_file >/dev/null 2>&1 &
+test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$out_file.*")" && python -c "import json; d={}; d['status']=0; d['target_file']='$target_file'; d['date']='$date'; d['out_file']='$out_file'; print json.dumps(d);" \
+|| python -c "import json; d={}; d['status']=-1; print json.dumps(d);"
 
-bash -c "while true; do test -z \"\$(ps -ef | grep -v grep | grep -e \"scamper.*$node_name.*$timestamp.*$out_file.*$target_file\")\" && touch $mark_file && exit; sleep 10; done" >/dev/null 2>&1 &
+export -f write_log
+nohup bash -c "while true; do test -z \"\$(ps -ef | grep -v grep | grep -e \"scamper.*$out_file.*\")\" && write_log $log_file end_time \$(date +%Y%m%d-%H:%M:%S) && exit; sleep 10; done" >this.debug 2>&1 &
 }
 
 #check
@@ -30,13 +60,7 @@ check_usage(){
 
 check(){
 output_dir=$1
-ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python <(
-cat << "EOF"
-tl=raw_input().split()
-for i in range(0,len(tl),2):
-  print tl[i+1],tl[i] 
-EOF
-) | grep ".* 3$" | cut -d' ' -f1
+ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq | while read line; do test ! -z "$(cat $output_dir/$line.log | grep end_time)" && test -z "$(cat $output_dir/$line.log | grep read_time)" && echo $line; done
 }
 
 #list
@@ -46,7 +70,22 @@ list_usage(){
 
 list(){
 output_dir=$1
-ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq -c | xargs | python -c "import json; d={}; tl=raw_input().split(); task_list=[(tl[i+1],int(tl[i])) for i in range(0,len(tl),2)]; d['status']=0; d['task_list']=task_list; d['output_dir']='$output_dir'; print json.dumps(d);"
+ls $output_dir | grep -v "target" | cut -d'.' -f1,2 | uniq | while read line; do printf "$line $(kv_to_json $output_dir/$line.log)|"; done | python <(
+cat << "EOF"
+import json
+d={}
+tl=[]
+try:
+  tl=raw_input().split('|')[:-1]
+except:
+  pass
+task_list=[(tl[i].split(' ')[0], json.loads(tl[i].split(' ',1)[1])) for i in range(len(tl))]
+d['status']=0
+d['task_list']=task_list
+d['output_dir']='$output_dir'
+print json.dumps(d)
+EOF
+)
 }
 
 #remove
@@ -64,7 +103,35 @@ obj=json.loads(raw_input())
 for i in obj:
   print i
 EOF
+) | while read id; do test -z "$(cat $output_dir/$id.log | grep end_time)" && ps -ef | grep scamper.*$id | grep -v grep.*scamper$ | awk '{print $2}' | xargs -I {} kill {}; done
+
+echo $id_list | python <(
+cat << "EOF"
+import json
+obj=json.loads(raw_input())
+for i in obj:
+  print i
+EOF
 ) | while read id; do if ls $output_dir/$id.[a-z]* >/dev/null 2>&1; then ls $output_dir/$id.[a-z]*; fi; done | xargs -I {} rm {}
+python -c "import json; d={}; d['status']=0; print json.dumps(d);"
+}
+
+#seen
+seen_usage(){
+  echo "seen <\$output_dir> <\$id_list>"
+}
+
+seen(){
+output_dir=$1
+id_list=$2
+echo $id_list | python <(
+cat << "EOF"
+import json
+obj=json.loads(raw_input())
+for i in obj:
+  print i
+EOF
+) | while read id; do write_log $output_dir/$id.log read_time $(date +%Y%m%d-%H:%M:%S); done
 python -c "import json; d={}; d['status']=0; print json.dumps(d);"
 }
 
@@ -97,5 +164,9 @@ case $OP in
   "remove")
     test $# -lt 3 && remove_usage && exit
     remove $2 $3
+    ;;
+  "seen")
+    test $# -lt 3 && seen_usage && exit
+    seen $2 $3
     ;;
 esac

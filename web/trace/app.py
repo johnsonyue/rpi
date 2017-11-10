@@ -68,9 +68,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				target = post["target"].value
 
 				user = "anonymous"
+				node_name = config["app"]["node_name"]
 				date = datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S")
 				output_dir = data_dir+"/"+user
-				target_file_path = output_dir+"/"+user+"."+date+".target"
+				target_file_path = output_dir+"/"+date+"."+node_name+".target"
 
 				if not os.path.exists(output_dir):
 					os.makedirs(output_dir)
@@ -78,6 +79,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				fp.write(target)
 				fp.close()
 
+				print ".db trace  "+target_file_path+" "+output_dir
 				h = subprocess.Popen(["./db","trace", target_file_path, output_dir], stdout=subprocess.PIPE)
 				result = h.stdout.read()
 				self.send_response(200)
@@ -99,6 +101,17 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				output_dir = data_dir+"/"+user
 
 				h = subprocess.Popen(["./db","remove", output_dir, rm_list], stdout=subprocess.PIPE)
+				result = h.stdout.read()
+				self.send_response(200)
+				self.end_headers()
+				self.wfile.write(result)
+		elif ( action == "read" ):
+			if post.has_key("read_list"):
+				read_list = post["read_list"].value
+				user = "anonymous"
+				output_dir = data_dir+"/"+user
+
+				h = subprocess.Popen(["./db","seen", output_dir, read_list], stdout=subprocess.PIPE)
 				result = h.stdout.read()
 				self.send_response(200)
 				self.end_headers()

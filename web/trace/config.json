@@ -1,6 +1,7 @@
 {
 	"app":{
 		"host_name":"172.31.31.155",
+		"node_name":"HKVPS",
 		"port_number":1235,
 		"root_dir":"/root/rpi/web",
 		"wsport_number":1236
