@@ -264,7 +264,7 @@ $(function() {
           row.find(".real:last-child")
              .append("<td>" + (task_list[i][1].end_time ? task_list[i][1].end_time : "") +"</td>");
           row.find(".real:last-child")
-             .append("<td>"+ ( task_list[i][1].end_time ? (task_list[i][1].read_time ?"finished":"finished*")  : "probing" ) +"</td>");
+             .append("<td class='form-inline'>"+ ( task_list[i][1].end_time ? (task_list[i][1].read_time ?"<span>FINISHED</span>&nbsp<span class='badge progress-bar-success'>-</span>":"<span>FINISHED*</span>&nbsp<span class='badge progress-bar-danger'>-</span>")  : "<span>PROBING</span>&nbsp<span class='badge progress-bar-warning'>-</span>" ) +"</td>");
           row.find(".real:last-child")
              .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' value='checkbox-" + i.toString() + "' style='visibility: hidden;'></input></td>");
 
