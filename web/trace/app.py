@@ -56,13 +56,31 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			else:
 				self.send_response(404)
 				self.end_headers()
+                elif url_path.split('?')[0] == "text":
+			get = {}
+			for x in url_path.split('?')[1].split('&'):
+				get[x.split('=')[0]] = x.split('=')[1]
+			if get["file"]:
+				warts_file = get["file"]
+				if os.path.exists(warts_file):
+					self.send_response(200)
+					self.end_headers()
+					self.wfile.write("1.in 2.out 3.is_dest 4.star 5.delay 6.freq 7.ttl 8.monitor 9.firstseen 10.lastseen\n")
+					h = subprocess.Popen("./decode -t caida -f "+warts_file+" | python trace2link.py", shell=True, stdout=subprocess.PIPE)
+					self.wfile.write(h.stdout.read())
+				else:
+					self.send_response(404)
+					self.end_headers()
+			else:
+				self.send_response(404)
+				self.end_headers()
 		else:
 			self.send_response(404)
 			self.end_headers()
 			
 	def do_POST(self):
 		action = self.path.replace('/','')
-		valid_action = ["trace", "list", "read", "remove","text"]
+		valid_action = ["trace", "list", "read", "remove"]
 		if ( action not in valid_action ):
 			self.send_response(505)
 			self.end_headers()

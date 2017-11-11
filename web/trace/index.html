@@ -128,8 +128,12 @@
 var host;
 var wsport;
 var baseurl;
-function on_file_click(path){
-    window.location.href = baseurl+"/download?file="+path;
+function on_file_click(path,type){
+    if (type=="file"){
+      window.open(baseurl+"/download?file="+path, '_blank');
+    }else if (type=="text"){
+      window.open(baseurl+"/text?file="+path, '_blank');
+    }
 }
 $(function() {
       //load config.
@@ -304,7 +308,6 @@ $(function() {
         data_dict = JSON.parse(data);
         task_list = data_dict.task_list;
         var output_dir = data_dict.output_dir;
-        console.log(output_dir);
         if (task_list.length){
           $('#notask').css("display","none");
         }else{
@@ -343,10 +346,10 @@ $(function() {
 	  div.find("table thead tr").append("<th>result_topo</th>");
           div.find("table").append("<tbody></tbody>");
           div.find("table tbody").append("<tr class='inner_row'></tr>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".target"+ "')>"+task_list[i][0]+".target</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".target"+ "','file')>"+task_list[i][0]+".target</a></td>");
 	  div.find(".inner_row:last-child").append("<td>"+task_list[i][1].target_num+"</td>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "')>"+task_list[i][0]+".warts</a></td>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer>view</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','file')>"+task_list[i][0]+".warts</a></td>");
+	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','text')>view</a></td>");
           if (editing) {
             $('#task_list .check').css("visibility","visible");
           }
