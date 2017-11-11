@@ -58,8 +58,8 @@
                <div class="form-inline form-group">
                  <button id="edit_btn" class="btn btn-default form-control pull-right" style="outline: none;"><span class="glyphicon glyphicon-edit"></span></button>
                  <button id="del_btn" class="btn btn-default form-control pull-left" style="border: 1px solid #d9534f; color: #d9534f; outline: none; visibility: hidden;"><span class="glyphicon glyphicon-trash"></span></button>
-                 <button id="read_btn" class="btn btn-default form-control pull-left" style="border: 1px solid #428bca; color: #428bca; outline: none; visibility: hidden;"><span class="glyphicon glyphicon-eye-open"></span></button>
                  <button id="selectall_btn" class="btn btn-default form-control pull-left" style="outline: none; visibility: hidden;"><span class="glyphicon glyphicon-check"></span></button>
+                 <button id="read_btn" class="btn btn-default form-control pull-left" style="border: 1px solid #428bca; color: #428bca; outline: none; visibility: hidden;"><span class="glyphicon glyphicon-eye-open"></span></button>
                  <button id="done_btn" class="btn btn-default form-control pull-right" style="outline: none; display: none;"><span class="glyphicon glyphicon-ok"></span></button>
                </div>
              </th>
@@ -128,13 +128,157 @@
 var host;
 var wsport;
 var baseurl;
-function on_file_click(path,type){
-    if (type=="file"){
-      window.open(baseurl+"/download?file="+path, '_blank');
-    }else if (type=="text"){
-      window.open(baseurl+"/text?file="+path, '_blank');
+function on_file_click(path,type,i){
+    window.open(baseurl+"/download?file="+path+"&type="+type, '_blank');
+    var read_list = [task_list[i][0]];
+    if ( !(type=="target" || (type!="target" && !task_list[i][1].end_time)) ){
+        $.ajax(baseurl + "read", {
+            type: 'POST',
+            data: {read_list: JSON.stringify(read_list)},
+            success: function(data, status, xhr){
+              reload_list();
+            },
+            error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+        });
     }
 }
+
+//setup the modal.
+var editing = false;
+var paste=true;
+var file;
+var upload_ajax;
+//add trace
+function on_trace_dispatched(data, status, xhr){
+    data_dict = JSON.parse(data);
+    $('#output').css("display","block");
+    if(data_dict.status){
+        $('#fail').css("display","block");
+    }else{
+        $('#detail_table').append("<thead><th>Attr</th><th>Value</th></thead>");
+        $('#detail_table').append("<tbody></tbody>");
+        $('#detail_table tbody').append("<tr><td>cycle id</td><td>"+data_dict.date+"</td></tr>");
+        $('#detail_table tbody').append("<tr><td>output file</td><td><a>"+data_dict.out_file+"</a></td></tr>");
+        $('#detail_table tbody').append("<tr><td>target file</td><td><a>"+data_dict.target_file+"</a></td></tr>");
+    }
+    reload_list();
+}
+function reload_input(){
+    $('#go_btn1').prop("disabled",false);
+    $('#target_text').val('');
+
+    $('#output').css("display","none");
+    $('#fail').css("display","none");
+    $('#detail_table').html('');
+}
+
+//list tasks.
+var task_list;
+var checked = false;
+function fill_table(data, status, xhr){
+  data_dict = JSON.parse(data);
+  task_list = data_dict.task_list;
+  console.log(task_list);
+  var output_dir = data_dict.output_dir;
+  if (task_list.length){
+    $('#notask').css("display","none");
+  }else{
+    $('#notask').css("display","block");
+  }
+
+  tbl = $('#task_list tbody');
+  tbl.html('');
+  for (var i=0; i<task_list.length; i++){
+    var row = tbl.append("<tr class='real'></tr>");
+    row.find(".real:last-child")
+       .append("<td>"+parseInt(i+1)+"</td>");
+    row.find(".real:last-child")
+       .append("<td>"+task_list[i][0]+"</td>");
+    row.find(".real:last-child")
+       .append("<td>"+task_list[i][1].start_time+"</td>");
+    row.find(".real:last-child")
+       .append("<td>" + (task_list[i][1].end_time ? task_list[i][1].end_time : "") +"</td>");
+    row.find(".real:last-child")
+       .append("<td class='form-inline'>"+ ( task_list[i][1].end_time ? (task_list[i][1].read_time ?"<span>FINISHED</span>&nbsp<span class='badge progress-bar-success'>-</span>":"<span>FINISHED*</span>&nbsp<span class='badge progress-bar-danger'>-</span>")  : "<span>PROBING</span>&nbsp<span class='badge progress-bar-warning'>-</span>" ) +"</td>");
+    row.find(".real:last-child")
+       .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' value='checkbox-" + i.toString() + "' style='visibility: hidden;'></input></td>");
+
+    var row = tbl.append("<tr class='fake' style='display: none;'></tr>");
+    row.find(".fake:last-child")
+       .append("<td colspan='100%'><div id='inline_div" + i.toString() + "' class='collapse col-md-12'></div></td>");
+    row.find(".fake:last-child").on('hide.bs.collapse', function () {$(this).css("display","none");});
+    row.find(".fake:last-child").on('show.bs.collapse', function () {$(this).css("display","");});
+
+    var div = row.find(".fake:last-child div");
+    div.append("<table class='table table-bordered col-md-12'></table>");
+    div.find("table").append("<thead><tr></tr></thead>");
+    div.find("table thead tr").append("<th>target_file</th>");
+    div.find("table thead tr").append("<th>target_number</th>");
+    div.find("table thead tr").append("<th>result_file</th>");
+    div.find("table thead tr").append("<th>result_topo</th>");
+    div.find("table").append("<tbody></tbody>");
+    div.find("table tbody").append("<tr class='inner_row'></tr>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".target"+ "','target',"+i.toString()+")>"+task_list[i][0]+".target</a></td>");
+    div.find(".inner_row:last-child").append("<td>"+task_list[i][1].target_num+"</td>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','trace',"+i.toString()+")>"+task_list[i][0]+".warts</a></td>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','links',"+i.toString()+")>view</a></td>");
+    if (editing) {
+      $('#task_list .check').css("visibility","visible");
+    }
+  }
+}
+
+function reload_list(){
+    $.ajax(baseurl + "list", {
+        type: 'POST',
+        data: {user: "anonymous"},
+        success: fill_table,
+        error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+    });
+}
+
+//notification.
+var notification_num = 0;
+var ignore = true;
+var sms_sound = new Howl({
+  src: ['../bootstrap-3.3.7-dist/assets/sms.mp3']
+});
+
+function start_ws(){
+    ws = new WebSocket("ws://" + host + ":" + wsport + "/ws");
+     
+    ws.onmessage = function(evt) {
+      console.log("message received: " + evt.data);
+      result_json = JSON.parse(evt.data);
+      var result_len = result_json.result_list.length;
+      if (result_len > 0){
+          if (result_len > notification_num){
+            notification_num = result_len;
+            if (!ignore){
+              sms_sound.play();
+            }else{
+              ignore = false;
+            }
+          }
+          $('#notification_badge').css("display","block");
+          $('#notification_badge').html(result_len);
+      }else{
+          $('#notification_badge').css("display","none");
+          $('#notification_badge').html(0);
+      }
+      reload_list();
+    };
+
+    ws.onclose = function(evt) {
+      console.log("Connection close");
+    };
+
+    ws.onopen = function(evt) { 
+      console.log("Connection Opened");
+    };
+}
+
+
 $(function() {
       //load config.
       $.ajax("config.json", {
@@ -149,50 +293,6 @@ $(function() {
         error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
       });
 
-      //notification.
-      var notification_num = 0;
-      var ignore = true;
-      var sms_sound = new Howl({
-        src: ['../bootstrap-3.3.7-dist/assets/sms.mp3']
-      });
-
-      function start_ws(){
-          ws = new WebSocket("ws://" + host + ":" + wsport + "/ws");
-           
-          ws.onmessage = function(evt) {
-            console.log("message received: " + evt.data);
-            result_json = JSON.parse(evt.data);
-            var result_len = result_json.result_list.length;
-            if (result_len > 0){
-                if (result_len > notification_num){
-                  notification_num = result_len;
-                  if (!ignore){
-                    sms_sound.play();
-                  }else{
-                    ignore = false;
-                  }
-                }
-                $('#notification_badge').css("display","block");
-                $('#notification_badge').html(result_len);
-            }else{
-                $('#notification_badge').css("display","none");
-                $('#notification_badge').html(0);
-            }
-            reload_list();
-          };
- 
-          ws.onclose = function(evt) {
-            console.log("Connection close");
-          };
- 
-          ws.onopen = function(evt) { 
-            console.log("Connection Opened");
-          };
-      }
-
-      //setup the modal.
-      var paste=true;
-      var file;
       $('#browse').on('change', function(files) {
           file = this.files[0];
           $("#file").val(file.name);
@@ -218,29 +318,6 @@ $(function() {
         return ans;
       });
 
-      //add trace
-      function on_trace_dispatched(data, status, xhr){
-          data_dict = JSON.parse(data);
-          $('#output').css("display","block");
-          if(data_dict.status){
-              $('#fail').css("display","block");
-          }else{
-              $('#detail_table').append("<thead><th>Attr</th><th>Value</th></thead>");
-              $('#detail_table').append("<tbody></tbody>");
-              $('#detail_table tbody').append("<tr><td>cycle id</td><td>"+data_dict.date+"</td></tr>");
-              $('#detail_table tbody').append("<tr><td>output file</td><td><a>"+data_dict.out_file+"</a></td></tr>");
-              $('#detail_table tbody').append("<tr><td>target file</td><td><a>"+data_dict.target_file+"</a></td></tr>");
-          }
-          reload_list();
-      }
-      function reload_input(){
-          $('#go_btn1').prop("disabled",false);
-          $('#target_text').val('');
-
-          $('#output').css("display","none");
-          $('#fail').css("display","none");
-          $('#detail_table').html('');
-      }
       $('#go_btn1').on('click',function(){
           var target_text = $('#target_text').val();
           if (target_text == "") {
@@ -255,7 +332,6 @@ $(function() {
               error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
           });
       });
-      var upload_ajax;
       $('#go_btn2').on('click',function(){
           if (!file){
             alert("empty target");
@@ -302,78 +378,14 @@ $(function() {
           $('#input_modal').modal();
       });
      
-      //list tasks.
-      var task_list;
-      function fill_table(data, status, xhr){
-        data_dict = JSON.parse(data);
-        task_list = data_dict.task_list;
-        var output_dir = data_dict.output_dir;
-        if (task_list.length){
-          $('#notask').css("display","none");
-        }else{
-          $('#notask').css("display","block");
-        }
-
-        tbl = $('#task_list tbody');
-        tbl.html('');
-        for (var i=0; i<task_list.length; i++){
-          var row = tbl.append("<tr class='real'></tr>");
-          row.find(".real:last-child")
-             .append("<td>"+parseInt(i+1)+"</td>");
-          row.find(".real:last-child")
-             .append("<td>"+task_list[i][0]+"</td>");
-          row.find(".real:last-child")
-             .append("<td>"+task_list[i][1].start_time+"</td>");
-          row.find(".real:last-child")
-             .append("<td>" + (task_list[i][1].end_time ? task_list[i][1].end_time : "") +"</td>");
-          row.find(".real:last-child")
-             .append("<td class='form-inline'>"+ ( task_list[i][1].end_time ? (task_list[i][1].read_time ?"<span>FINISHED</span>&nbsp<span class='badge progress-bar-success'>-</span>":"<span>FINISHED*</span>&nbsp<span class='badge progress-bar-danger'>-</span>")  : "<span>PROBING</span>&nbsp<span class='badge progress-bar-warning'>-</span>" ) +"</td>");
-          row.find(".real:last-child")
-             .append("<td class='text-center'><a style=cursor:pointer data-toggle='collapse' href='#inline_div" + i.toString() + "' aria-expanded='false' aria-controls='inline_div" + i.toString() + "'> expand&nbsp<span class='glyphicon glyphicon-menu-down'></span></a><input class='pull-right check' type='checkbox' value='checkbox-" + i.toString() + "' style='visibility: hidden;'></input></td>");
-
-          var row = tbl.append("<tr class='fake' style='display: none;'></tr>");
-          row.find(".fake:last-child")
-             .append("<td colspan='100%'><div id='inline_div" + i.toString() + "' class='collapse col-md-12'></div></td>");
-          row.find(".fake:last-child").on('hide.bs.collapse', function () {$(this).css("display","none");});
-          row.find(".fake:last-child").on('show.bs.collapse', function () {$(this).css("display","");});
-
-          var div = row.find(".fake:last-child div");
-          div.append("<table class='table table-bordered col-md-12'></table>");
-          div.find("table").append("<thead><tr></tr></thead>");
-	  div.find("table thead tr").append("<th>target_file</th>");
-	  div.find("table thead tr").append("<th>target_number</th>");
-	  div.find("table thead tr").append("<th>result_file</th>");
-	  div.find("table thead tr").append("<th>result_topo</th>");
-          div.find("table").append("<tbody></tbody>");
-          div.find("table tbody").append("<tr class='inner_row'></tr>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".target"+ "','file')>"+task_list[i][0]+".target</a></td>");
-	  div.find(".inner_row:last-child").append("<td>"+task_list[i][1].target_num+"</td>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','file')>"+task_list[i][0]+".warts</a></td>");
-	  div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','text')>view</a></td>");
-          if (editing) {
-            $('#task_list .check').css("visibility","visible");
-          }
-        }
-      }
-      
-      function reload_list(){
-          $.ajax(baseurl + "list", {
-              type: 'POST',
-              data: {user: "anonymous"},
-              success: fill_table,
-              error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
-          });
-      }
-      
       //edit tasks.
-      var editing = false;
       $('#edit_btn').on('click',function(){
           $('#task_list .check').css("visibility","visible");
           $('#edit_btn').css("display","none");
           $('#done_btn').css("display","block");
           $('#selectall_btn').css("visibility","visible");
           $('#del_btn').css("visibility","visible");
-          $('#read_btn').css("visibility","visible");
+          //$('#read_btn').css("visibility","visible");
           editing = true;
       });
       $('#done_btn').on('click',function(){
@@ -382,10 +394,9 @@ $(function() {
           $('#done_btn').css("display","none");
           $('#selectall_btn').css("visibility","hidden");
           $('#del_btn').css("visibility","hidden");
-          $('#read_btn').css("visibility","hidden");
+          //$('#read_btn').css("visibility","hidden");
           editing = false;
       });
-      var checked = false;
       $('#selectall_btn').on('click',function(){
           if (!checked){
             checked = true;

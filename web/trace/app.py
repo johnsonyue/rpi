@@ -8,6 +8,8 @@ from SocketServer import ThreadingMixIn
 import cgi
 import subprocess
 
+import ip
+
 class Server(BaseHTTPServer.HTTPServer):
 	def __init__(self, (HOST_NAME, PORT_NUMBER), handler, config):
 		BaseHTTPServer.HTTPServer.__init__(self, (HOST_NAME, PORT_NUMBER), handler)
@@ -44,30 +46,21 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 			get = {}
 			for x in url_path.split('?')[1].split('&'):
 				get[x.split('=')[0]] = x.split('=')[1]
-			if get["file"]:
+			if get["file"] and get["type"]:
 				download_path = get["file"]
+				download_type = get["type"]
 				if os.path.exists(download_path):
 					self.send_response(200)
 					self.end_headers()
-					self.wfile.write(open(download_path,'rb').read())
-				else:
-					self.send_response(404)
-					self.end_headers()
-			else:
-				self.send_response(404)
-				self.end_headers()
-                elif url_path.split('?')[0] == "text":
-			get = {}
-			for x in url_path.split('?')[1].split('&'):
-				get[x.split('=')[0]] = x.split('=')[1]
-			if get["file"]:
-				warts_file = get["file"]
-				if os.path.exists(warts_file):
-					self.send_response(200)
-					self.end_headers()
-					self.wfile.write("1.in 2.out 3.is_dest 4.star 5.delay 6.freq 7.ttl 8.monitor 9.firstseen 10.lastseen\n")
-					h = subprocess.Popen("./decode -t caida -f "+warts_file+" | python trace2link.py", shell=True, stdout=subprocess.PIPE)
-					self.wfile.write(h.stdout.read())
+					if (download_type == "target"):
+						self.wfile.write(open(download_path,'rb').read())
+					elif (download_type == "trace"):
+						h = subprocess.Popen("sc_warts2text "+download_path, shell=True, stdout=subprocess.PIPE)
+						self.wfile.write(h.stdout.read())
+					elif (download_type == "links"):
+						self.wfile.write("1.in 2.out 3.is_dest 4.star 5.delay 6.freq 7.ttl 8.monitor 9.firstseen 10.lastseen\n")
+						h = subprocess.Popen("./decode -t caida -f "+download_path+" | python trace2link.py", shell=True, stdout=subprocess.PIPE)
+						self.wfile.write(h.stdout.read())
 				else:
 					self.send_response(404)
 					self.end_headers()
@@ -103,6 +96,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 					target = post["target"].value
 				else:
 					target = post["file"].value
+				target = ip.process(target)
 
 				user = "anonymous"
 				node_name = config["app"]["node_name"]
