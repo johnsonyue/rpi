@@ -45,7 +45,7 @@ write_log $log_file start_time $date
 write_log $log_file target_num $(cat $target_file <(echo) | grep -v "^$" | wc -l)
 write_log $log_file target_file $target_file
 write_log $log_file result_file $out_file
-nohup scamper -c 'trace' -p 10000 -M $node_name -C $timestamp -o $out_file -O warts -f $target_file >/dev/null 2>&1 &
+nohup scamper -c 'trace' -p 1000 -M $node_name -C $timestamp -o $out_file -O warts -f $target_file >/dev/null 2>&1 &
 test ! -z "$(ps -ef | grep -v grep | grep -e "scamper.*$out_file.*")" && python -c "import json; d={}; d['status']=0; d['target_file']='$target_file'; d['date']='$date'; d['out_file']='$out_file'; print json.dumps(d);" \
 || python -c "import json; d={}; d['status']=-1; print json.dumps(d);"
 
@@ -82,10 +82,9 @@ except:
 task_list=[(tl[i].split(' ')[0], json.loads(tl[i].split(' ',1)[1])) for i in range(len(tl))]
 d['status']=0
 d['task_list']=task_list
-d['output_dir']='$output_dir'
 print json.dumps(d)
 EOF
-)
+) | python -c "import json; obj=json.loads(raw_input()); obj['output_dir']='$output_dir'; print json.dumps(obj);"
 }
 
 #remove

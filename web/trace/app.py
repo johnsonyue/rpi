@@ -40,13 +40,29 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				self.send_header("Content-type", "text/html")
 			self.end_headers()
 			self.wfile.write(open(file_path,'rb').read())
+                elif url_path.split('?')[0] == "download":
+			get = {}
+			for x in url_path.split('?')[1].split('&'):
+				get[x.split('=')[0]] = x.split('=')[1]
+			if get["file"]:
+				download_path = get["file"]
+				if os.path.exists(download_path):
+					self.send_response(200)
+					self.end_headers()
+					self.wfile.write(open(download_path,'rb').read())
+				else:
+					self.send_response(404)
+					self.end_headers()
+			else:
+				self.send_response(404)
+				self.end_headers()
 		else:
 			self.send_response(404)
 			self.end_headers()
 			
 	def do_POST(self):
 		action = self.path.replace('/','')
-		valid_action = ["trace", "list", "read", "remove"]
+		valid_action = ["trace", "list", "read", "remove","text"]
 		if ( action not in valid_action ):
 			self.send_response(505)
 			self.end_headers()
@@ -64,8 +80,11 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 		config = json.loads(open("config.json").read())
 		data_dir = config["data"]["root_dir"]
 		if ( action == "trace" ):
-			if post.has_key("target"):
-				target = post["target"].value
+			if post.has_key("target") or post.has_key("file"):
+                                if post.has_key("target"):
+					target = post["target"].value
+				else:
+					target = post["file"].value
 
 				user = "anonymous"
 				node_name = config["app"]["node_name"]
@@ -79,7 +98,6 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 				fp.write(target)
 				fp.close()
 
-				print ".db trace  "+target_file_path+" "+output_dir
 				h = subprocess.Popen(["./db","trace", target_file_path, output_dir], stdout=subprocess.PIPE)
 				result = h.stdout.read()
 				self.send_response(200)
