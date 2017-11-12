@@ -1,17 +1,17 @@
 {
 	"app":{
-		"host_name":"172.31.31.155",
+		"host_name":"<ip>",
 		"node_name":"HKVPS",
 		"port_number":1235,
 		"root_dir":"/root/rpi/web",
 		"wsport_number":1236
 	},
 	"data":{
-		"root_dir":"data/"
+		"root_dir":"/root/data/"
 	},
         "web":{
-               "baseurl":"http://47.90.99.168:1235/",
-               "host":"47.90.99.168",
+               "baseurl":"http://<ip>:1235/",
+               "host":"<ip>",
                "wsport":"1236"
         }
 }
