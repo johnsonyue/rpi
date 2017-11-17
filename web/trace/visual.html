@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+
+    <title>quick trace web interface</title>
+
+    <link href="../bootstrap-3.3.7-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../bootstrap-3.3.7-dist/css/dashboard.css" rel="stylesheet">
+</head>
+
+<body>
+<script src="../bootstrap-3.3.7-dist/js/jquery.min.js"></script>
+<script src="../bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+<script src="../bootstrap-3.3.7-dist/js/d3.v4.min.js"></script>
+<div class="container-fluid">
+    <div class="row">
+    <nav class="navbar navbar-default navbar-fixed-top">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="#">TRACE WEB INTERFACE</a>
+            </div>
+    
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="#">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="col-md-12">
+       <div class="page-header">
+         <h2>Links List</h2>
+       </div>
+       <div>
+           <table class="table table-bordered col-md-10" id="task_list">
+           <thead>
+             <th style="vertical-align: middle;">#</th>
+             <th style="vertical-align: middle;">in</th>
+             <th style="vertical-align: middle;">out</th>
+             <th style="vertical-align: middle;">is_dest</th>
+             <th style="vertical-align: middle;">star</th>
+             <th style="vertical-align: middle;">delay</th>
+             <th style="vertical-align: middle;">freq</th>
+             <th style="vertical-align: middle;">ttl</th>
+             <th style="vertical-align: middle;">monitor</th>
+             <th style="vertical-align: middle;">firstseen</th>
+             <th style="vertical-align: middle;">lastseen</th>
+           </thead>
+           <tbody></tbody>
+           </table>
+           <p id="notask">No links.</p>
+       </div>
+    </div>
+
+    <div class="col-md-12">
+       <div class="page-header">
+         <h2>Links Graph</h2>
+       </div>
+    <div class="col-md-12" tabindex=0>
+        <svg></svg>
+    </div>
+    </div>
+</div>
+</body>
+<script>
+var baseurl;
+var width = 1920,
+    height = 1080;
+
+var links;
+var nodes;
+function redraw_svg(data){
+  //prepare data.
+  var header_line = data.substring(0,data.indexOf('\n')+1).replace('in','source').replace('out','target');
+  links=d3.dsvFormat(' ').parse( header_line + data.substring(data.indexOf('\n')+1) );
+  var uniq = {};
+  links.forEach(function(i){
+      uniq[i.source]='';
+      uniq[i.target]='';
+  });
+  nodes=Object.keys(uniq).map(function(i){ return {'ip':i}; });
+
+  //draw
+  var svg = d3.select("svg")
+      .attr("width",width)
+      .attr("height",height);
+  var simulation = d3.forceSimulation()
+      .force("link", d3.forceLink().id(function(d) { return d.id; }))
+      .force("charge", d3.forceManyBody())
+      .force("center", d3.forceCenter(width / 2, height / 2));
+  //clear
+  //enter
+/*
+  var link = svg.append("g")
+      .attr("class", "links")
+    .selectAll("line")
+    .data(links)
+    .enter().append("line")
+      .attr("stroke-width", function(d) { return Math.sqrt(d.value); });
+*/
+}
+$(function(){
+    //load config.
+    $.ajax("trace/config.json", {
+      type: 'GET',
+      async: false,
+      success: function(data){
+        json = $.parseJSON(data);
+        baseurl = json.web.baseurl;
+      },
+      error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+    });
+
+    var filename = $('#filename').val();
+    if (!filename){
+        return;
+    }
+    $.ajax(baseurl+"download?file="+filename+"&type=links", {
+        type: 'GET',
+        success: function(data, status, xhr){
+          redraw_svg(data);
+        },
+        error: function (jqXhr, textStatus, errorMessage) {console.log('Error' + errorMessage);}
+    });
+});
+</script>
+</html>

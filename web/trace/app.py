@@ -58,9 +58,15 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 						h = subprocess.Popen("sc_warts2text "+download_path, shell=True, stdout=subprocess.PIPE)
 						self.wfile.write(h.stdout.read())
 					elif (download_type == "links"):
-						self.wfile.write("1.in 2.out 3.is_dest 4.star 5.delay 6.freq 7.ttl 8.monitor 9.firstseen 10.lastseen\n")
+						self.wfile.write("in out is_dest star delay freq ttl monitor firstseen lastseen\n")
 						h = subprocess.Popen("./decode -t caida -f "+download_path+" | python trace2link.py", shell=True, stdout=subprocess.PIPE)
 						self.wfile.write(h.stdout.read())
+					elif (download_type == "visual"):
+						with open("visual.html",'rb') as f:
+							for l in f.readlines():
+								if l=="</body>\r\n":
+									self.wfile.write("<input id='filename' type='hidden' name='file' value='"+ str(download_path) +"'></input>\n")
+								self.wfile.write(l)
 				else:
 					self.send_response(404)
 					self.end_headers()
