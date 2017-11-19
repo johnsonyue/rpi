@@ -183,7 +183,7 @@ var page_size=30, pager_size=10;
 var pager_front=1, pager_active=1;
 function on_pager_click(e){
   var c=$(this).attr("class");
-  var last = rows.length/page_size+(rows.length/page_size?0:1);
+  var last = Math.ceil(rows.length/page_size);
   if (c == 'page-link ff'){
     pager_active=Math.min( pager_front+pager_size, last );
     pager_front=Math.max( pager_active-pager_size+1, 1 );
@@ -193,11 +193,9 @@ function on_pager_click(e){
   }else if (c == 'page-link prev'){
     pager_active=1;
     pager_front=1;
-    console.log("prev");
   }else if (c == 'page-link next'){
     pager_active=last;
     pager_front=Math.max( pager_active-pager_size+1, 1 );
-    console.log("next");
   }else{
     pager_active=parseInt($(this).html());
   }
@@ -211,7 +209,7 @@ function refresh_table(){
   if (pager_front>0){
     pager.find("li").eq(0).after("<li class='page-item'><a class='page-link fb' href='#'>...</a></li>");
   }
-  var last = rows.length/page_size+(rows.length/page_size?0:1);
+  var last = Math.ceil(rows.length/page_size);
   for (var i=0; i<Math.min( pager_front+pager_size-1, last ); i++){
     if (pager_front+i == pager_active){
       pager.find("li").eq(i+1).after("<li class='page-item active'><a class='page-link' href='#'>"+(pager_front+i).toString()+"</a></li>");
