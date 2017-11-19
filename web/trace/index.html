@@ -221,9 +221,9 @@ function fill_table(data, status, xhr){
     div.find("table tbody").append("<tr class='inner_row'></tr>");
     div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".target"+ "','target',"+i.toString()+")>"+task_list[i][0]+".target</a></td>");
     div.find(".inner_row:last-child").append("<td>"+task_list[i][1].target_num+"</td>");
-    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','trace',"+i.toString()+")>"+task_list[i][0]+".warts</a></td>");
-    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','links',"+i.toString()+")>view</a></td>");
-    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','visual',"+i.toString()+")>view</a></td>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','trace',"+i.toString()+")>"+task_list[i][0]+".text</a></td>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','links',"+i.toString()+")>view text</a></td>");
+    div.find(".inner_row:last-child").append("<td><a style=cursor:pointer onclick=on_file_click('"+ output_dir+"/"+task_list[i][0]+".warts"+ "','visual',"+i.toString()+")>view graph</a></td>");
     if (editing) {
       $('#task_list .check').css("visibility","visible");
     }

@@ -211,7 +211,7 @@ function refresh_table(){
     pager.find("ul").append("<li class='page-item'><a class='page-link fb' href='#'>...</a></li>");
   }
   var last = Math.ceil(rows.length/page_size);
-  for (var i=pager_front; i<pager_front+pager_size; i++){
+  for (var i=pager_front; i<Math.min(pager_front+pager_size, last+1); i++){
     if (i == pager_active){
       pager.find("ul").append("<li class='page-item active'><a class='page-link' href='#'>"+(i).toString()+"</a></li>");
     }else{
