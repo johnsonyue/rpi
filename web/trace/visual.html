@@ -79,16 +79,16 @@
            <p id="nolinks">No links.</p>
            <nav id="pager" aria-label="pager" style="display: none;">
              <ul class="pagination">
-               <li id="prev" class="page-item">
-                 <a class="page-link prev" href="#" aria-label="Previous">
+               <li id="front" class="page-item">
+                 <a class="page-link front" href="#" aria-label="Previous">
                    <span aria-hidden="true">&laquo;</span>
                    <span class="sr-only">Previous</span>
                  </a>
                </li>
                <li class="page-item"><a class="page-link active" href="#">1</a></li>
                <li class="page-item"><a class="page-link" href="#">...</a></li>
-               <li id="next" class="page-item">
-                 <a class="page-link next" href="#" aria-label="Next">
+               <li id="end" class="page-item">
+                 <a class="page-link end" href="#" aria-label="Next">
                    <span aria-hidden="true">&raquo;</span>
                    <span class="sr-only">Next</span>
                  </a>
@@ -103,7 +103,7 @@
          <h2>Links Graph</h2>
        </div>
     <div class="col-md-12 frame" tabindex=0>
-        <svg width="100%" height="800"></svg>
+        <svg width="100%" height="1000"></svg>
     </div>
     </div>
 </div>
@@ -186,14 +186,14 @@ function on_pager_click(e){
   var last = Math.ceil(rows.length/page_size);
   if (c == 'page-link ff'){
     pager_active=Math.min( pager_front+pager_size, last );
-    pager_front=Math.max( pager_active-pager_size+1, 1 );
+    pager_front=pager_active;
   }else if (c == 'page-link fb'){
     pager_active=Math.max( pager_front-1, 1 );
-    pager_front=pager_active;
-  }else if (c == 'page-link prev'){
+    pager_front=Math.max( pager_active-pager_size+1, 1 );
+  }else if (c == 'page-link front'){
     pager_active=1;
     pager_front=1;
-  }else if (c == 'page-link next'){
+  }else if (c == 'page-link end'){
     pager_active=last;
     pager_front=Math.max( pager_active-pager_size+1, 1 );
   }else{
@@ -205,21 +205,23 @@ function on_pager_click(e){
 function refresh_table(){
   //refresh pager
   pager = $('#pager');
-  pager.find("li").not("#prev").not("#next").remove();
-  if (pager_front>0){
-    pager.find("li").eq(0).after("<li class='page-item'><a class='page-link fb' href='#'>...</a></li>");
+  pager.find("li").remove();
+  pager.find("ul").append("<li id='front' class='page-item'><a class='page-link front' href='#' aria-label='Previous'><span aria-hidden='true'>&laquo;</span><span class='sr-only'>Previous</span></a></li>");
+  if (pager_front>1){
+    pager.find("ul").append("<li class='page-item'><a class='page-link fb' href='#'>...</a></li>");
   }
   var last = Math.ceil(rows.length/page_size);
-  for (var i=0; i<Math.min( pager_front+pager_size-1, last ); i++){
-    if (pager_front+i == pager_active){
-      pager.find("li").eq(i+1).after("<li class='page-item active'><a class='page-link' href='#'>"+(pager_front+i).toString()+"</a></li>");
+  for (var i=pager_front; i<pager_front+pager_size; i++){
+    if (i == pager_active){
+      pager.find("ul").append("<li class='page-item active'><a class='page-link' href='#'>"+(i).toString()+"</a></li>");
     }else{
-      pager.find("li").eq(i+1).after("<li class='page-item'><a class='page-link' href='#'>"+(pager_front+i).toString()+"</a></li>");
+      pager.find("ul").append("<li class='page-item'><a class='page-link' href='#'>"+(i).toString()+"</a></li>");
     }
   }
   if (last > pager_front+pager_size-1){
-    pager.find("li").eq(i+1).after("<li class='page-item'><a class='page-link ff' href='#'>...</a></li>");
+    pager.find("ul").append("<li class='page-item'><a class='page-link ff' href='#'>...</a></li>");
   }
+  pager.find("ul").append("<li id='end' class='page-item'><a class='page-link end' href='#' aria-label='Next'><span aria-hidden='true'>&raquo;</span><span class='sr-only'>Next</span></a></li>");
   pager.find("li").find("a").click(on_pager_click);
 
   //refresh table
