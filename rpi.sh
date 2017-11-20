@@ -15,6 +15,7 @@ cd ../
 
 #scamper
 tar zxvf scamper-cvs-20141211e.tar.gz
+cp scamper_trace_text.c scamper-cvs-20141211e/scamper/trace/
 cd scamper-cvs-20141211e/
 ./configure
 make
