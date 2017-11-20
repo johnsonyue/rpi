@@ -103,13 +103,14 @@
          <h2>Links Graph</h2>
        </div>
     <div class="col-md-12 frame" tabindex=0>
-        <svg width="100%" height="1000"></svg>
+        <svg width="100%" height="2000"></svg>
     </div>
     </div>
 </div>
 </body>
 <script>
 var baseurl;
+var radius = 5;
 
 var links;
 var nodes;
@@ -136,7 +137,7 @@ function redraw_svg(){
     .selectAll("circle")
     .data(nodes)
     .enter().append("circle")
-      .attr("r", 5)
+      .attr("r", radius)
       .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -150,15 +151,17 @@ function redraw_svg(){
       .links(links);
 
   function ticked() {
+    var width = $('svg').parent().width();
+    var height = $('svg').parent().height();
     link
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+        .attr("x1", function(d) { return d.source.x = Math.max(radius, Math.min(width - radius, d.source.x)); })
+        .attr("y1", function(d) { return d.source.y = Math.max(radius, Math.min(height - radius, d.source.y)); })
+        .attr("x2", function(d) { return d.target.x = Math.max(radius, Math.min(width - radius, d.target.x)); })
+        .attr("y2", function(d) { return d.target.y = Math.max(radius, Math.min(height - radius, d.target.y)); });
 
     node
-        .attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
+        .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); });
   }
   function dragstarted(d) {
     if (!d3.event.active) simulation.alphaTarget(0.3).restart();
